@@ -1,11 +1,14 @@
+# import libraries
 from fastapi import FastAPI, Path, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, computed_field
 from typing import Annotated, Literal, Optional
 import json
 
+# Initialize FastAPI app
 app = FastAPI()
 
+# Define the Patient model
 class Patient(BaseModel):
     id : Annotated[str, Field(..., description="Id of the patient", examples=["P001"])]
     name : Annotated[str, Field(..., description="Name of the patient")] 
@@ -15,12 +18,14 @@ class Patient(BaseModel):
     height : Annotated[float, Field(..., gt=0, description="Height of the patient in meters")]
     weight : Annotated[float, Field(..., gt=0, description="Weight of the patient in kgs")]
 
+    # Computed fields for BMI 
     @computed_field
     @property
     def bmi(self)-> float:
         calculated_bmi = round(self.weight/(self.height**2),2)
         return calculated_bmi
     
+    # Computed fields for Verdict
     @computed_field
     @property
     def verdict(self)-> str:
@@ -33,6 +38,7 @@ class Patient(BaseModel):
         else:
             return "Obese"
 
+# Define the UpdatePatient model for partial updates
 class UpdatePatient(BaseModel):
     name : Annotated[Optional[ str], Field(default=None, description="Name of the patient")] 
     city : Annotated[Optional[ str], Field(default=None, description="Name of the city where the patient is living ")] 
@@ -51,21 +57,24 @@ def save_data(data):
     with open("patients.json", "w") as f :
         json.dump(data, f)
 
-
+# Define the API endpoints
 @app.get("/")
 def hello():
     return {"massage": "Patient Management System API"}
 
+# Define the about endpoint
 @app.get("/about")
 def about():
-    return {"massage": "A fully functional API for managing paitient records."}
+    return {"massage": "A fully functional API for managing patient records."}
 
+# Define the view endpoint to get all patients
 @app.get("/view")
 def view():
     #Load the patient
     data = get_data()
     return data
 
+# Define the view endpoint to get a specific patient by ID
 @app.get("/patient/{patient_id}")
 def view_patient(patient_id: str = Path(..., description="Give the ID of patient", example="P001")):
     #Load the patient
@@ -75,6 +84,7 @@ def view_patient(patient_id: str = Path(..., description="Give the ID of patient
     else:
         raise HTTPException(status_code=404, detail="Patient not found")
 
+# Define the sort endpoint to sort patients by height, weight, or BMI
 @app.get("/sort")
 def sort_patient(sort_by: str = Query(...,  description="Sort in the basis of Height , Weight or BMI", example="height"), order: str = Query("asc", description="Sort in asc or desc order")):
     valid_fields = ["height","weight","bmi"]
