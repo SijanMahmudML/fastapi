@@ -103,7 +103,7 @@ def sort_patient(sort_by: str = Query(...,  description="Sort in the basis of He
     return sorted_patient
 
 
-# # Create new Patient
+# Create new Patient
 @app.post("/create")
 def create_patient(patient : Patient) :
     # load existing data
